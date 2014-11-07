@@ -5,34 +5,12 @@ Artisan is a framework for development of large-scale (e.g. > 50,000 LOC) Node.j
  * Dependency injection
  * Good testability - DI, after all
  * Command-based architecture
+ * Facades
 
 Currently it is targeted for server-side only.
 
 ## Usage
 
-Quick/basic demo:
-
-```js
-// Create an application instance.
-var app = require('node-artisan')();
-
-// Create some module with no dependencies.
-app.module('smallRandom', function () {
-    return function () {
-        Math.ceil(Math.random() * 10)
-    };
-});
-
-// Create an anonymous module that depends on another.
-var largeRandom = app.module(['smallRandom', function (smallRandom) {
-    return function () {
-        smallRandom() * 10
-    };
-}]);
-
-// It can then be used just like any other function!
-console.log(largeRandom());
-```
 
 #### Bootstrapping
 
@@ -56,7 +34,6 @@ random
     |-- small.js
     |-- large.js
     |-- index.js
-    |-- package.json
     +-- strings
         |-- index.js
         |-- uuid.js
@@ -64,19 +41,36 @@ someModule
     |-- index.js
 ```
 
-**Index.js**
+**random/index.js**
+
+The index acts as a service provider, binding items to the application as we need them.
 
 ```js
 module.exports = function (app) {
-    var modules = app.import(['someModule']);
-    
+
     return {
-        // Just requirin stuff, like you normally would...
-        small: require('./small')(),
-        large: require('./large')(modules.someModule),
-        // Load the "strings" submodule, relative to this one.
-        strings: app.import(['./strings']);
-    }
+        // register the services this provider, in the application
+        register: function (app) {
+            // Define some service it provides
+            app.module('small', function () {
+                return require('./small');
+            });
+            // Define a service that depends on another service.
+            app.module('large', ['someModule.service', function (m) {
+                return require('./large')(m);
+            });
+            
+            // Load the "submodule" as well.
+            app.load('./strings');
+        },
+        // Whether the modules this providers should be loaded when we need
+        // them, or right from the get-go.
+        eager: false,
+        // The name of the service provider determines how its
+        // services will be access. For instance, we can now
+        // access `random.small` - it's nested.
+        name: "random"
+    };
 }
 ```
 
@@ -85,27 +79,26 @@ Note: when mocking or unmocking dependencies, all modules are "reloaded", so exp
 **Consuming it:** in test.js
 
 ```js
-// Load it up...
-var random = app.import('./random');
+// Load it up - you can resolve anything just by calling app()
+var random = app('random.small');
 
-console.log(random.small());
+console.log(random());
 ```
 
 **Mocks:** You can, of course, mock anything for testing purposes.
 
 ```js
-app.mock('random', function () {
-    return {
-        small: function () {
+app.mock('random.small', function () {
+    return function () {
         return 42;
-        }
     };
 });
 
-console.log(random.small()); // will output 42
+var random = app('random.small');
+console.log(random()); // will output 42
 
 // You can reverse the mocks you made by name...
-app.unmock('smallRandom'); 
+app.unmock('random.small'); 
 // Or just entirely
 app.unmock();
 ```
@@ -163,6 +156,15 @@ app.command('add', AddUserCommand);
             .catch(function (e) {
                 return res.status(400).json(e);
             })
+        
+        // You can also "inject" yourself before or after stages.
+        cmd.after('user.validate', function (cmd, next) {
+            if (iLikeThisPerson(cmd)) {
+                next();
+            } else {
+                res.status(400).json('You need to send me cookies first.');
+            }
+        });
     }
 ```
 
