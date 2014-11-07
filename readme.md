@@ -170,14 +170,11 @@ app.command('add', AddUserCommand);
 
 ```js
 function userValidate (command, callback) {
-    var data = { user: command.username, pass: command.password}
-    if (someLibrary.isValid()) {
+    var data = { user: command.username, pass: command.password };
+    if (someLibrary.isValid(data)) {
         callback();
     } else {
         callback('Noupe, try again!');
     }
 }
-
-app.module('user.validate', userValidate);
-
 ```
