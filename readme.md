@@ -1,5 +1,7 @@
 # Artisan
 
+[![Build Status](https://travis-ci.org/MCProHosting/artisan.svg)](https://travis-ci.org/MCProHosting/artisan)
+
 Artisan is a framework for development of large-scale (e.g. > 50,000 LOC) Node.js applications. It's inspired in part by [c9/architect](https://github.com/c9/architect), [Angular](https://github.com/angular/angular.js), and the [Laravel framework](https://github.com/laravel/framework/). It emphasizes It features:
 
  * Dependency injection
@@ -58,10 +60,10 @@ module.exports = function (app) {
             // Define a service that depends on another service.
             app.module('large', ['someModule.service', function (m) {
                 return require('./large')(m);
-            });
+            }]);
             
-            // Load the "submodule" as well.
-            app.load('./strings');
+            // Load all subdirectories of this as well.
+            app.load('./');
         },
         // Whether the modules this providers should be loaded when we need
         // them, or right from the get-go.
@@ -79,6 +81,7 @@ Note: when mocking or unmocking dependencies, all modules are "reloaded", so exp
 **Consuming it:** in test.js
 
 ```js
+app.register('./');
 // Load it up - you can resolve anything just by calling app()
 var random = app('random.small');
 
