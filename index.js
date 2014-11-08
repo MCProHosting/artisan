@@ -1,14 +1,16 @@
 var _ = require('lodash');
-var Artisan = require('./lib/artisan');
+var Artisan = require('./lib');
+var Command = require('./lib/command');
 
 /**
  * Create a new artisan instance and apply it
  * to a proxy function for `resolve`.
  *
+ * @param {Object} options
  * @return {function}
  */
-module.exports = function () {
-    var artisan = new Artisan();
+module.exports = function (options) {
+    var artisan = new Artisan(options);
 
     // Define the "app" function.
     var app = function app () {

@@ -110,13 +110,15 @@ app.unmock();
 
 This is where things get fun. The [command pattern](http://en.wikipedia.org/wiki/Command_pattern) is really great for promoting loosely coupled systems, and pairs well with Node.js asyncness!
 
+> **Not Implemented**. Not yet sure if implementing this pattern in Node is significantly advantageous over using promises with the above IoC. Going going to wait and do some "real world" testing and determine if this is necessary.
+
 **Instantiation:**
 
 ```js
 var artisan = require('node-artisan');
-// Lets say we have a command to create a user,
-// with a name and password
-function AddUserCommand (username, password) {
+// Lets say we have a command to create a user, with a name and password,
+// Make it just like you would a module, but use the context!
+app.command('add', function (username, password) {
     // Set up our initial data. The command itself may be used to
     // persist data between command stages.
     this.username = username;
@@ -136,20 +138,14 @@ function AddUserCommand (username, password) {
         // Only after those two are done, add the user.
         'user.insert': ['hashPassword', 'user.welcome']
     }
-
-    _.extend(this, artisan.command);
-}
-
-// Bind the user to the command. You can, of course, use $inject
-// in the command as well.
-app.command('add', AddUserCommand);
+});
 ```
 
 **Example Usage:**
 
 ```js
     register: function (req, res) {
-        var cmd = app.command('user.add', req.param('username'), req.param('password'));
+        var cmd = app.dispatch('user.add', req.param('username'), req.param('password'));
         
         // Dispatch returns a Bluebird promise.
         cmd.dispatch()
