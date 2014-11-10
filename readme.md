@@ -8,7 +8,7 @@ Artisan is a framework for development of large-scale (e.g. > 50,000 LOC) Node.j
  * Good testability - DI, after all
  * more to come?
 
-Currently it is targeted for server-side only, and is quite performant. After the intial module loading (which should happen once on application boot), it can run about 3.4 million resolutions per second on my Macbook Air at scales in O(1) time:
+Currently it is targeted for server-side only, and is quite performant. After the intial module loading (which should happen once on application boot), it can run about 3.4 million resolutions per second on my Macbook Air and scales in O(1) time:
 
 ```
 $ node bench.js
