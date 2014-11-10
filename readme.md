@@ -2,14 +2,25 @@
 
 [![Build Status](https://travis-ci.org/MCProHosting/artisan.svg)](https://travis-ci.org/MCProHosting/artisan)
 
-Artisan is a framework for development of large-scale (e.g. > 50,000 LOC) Node.js applications. It's inspired in part by [c9/architect](https://github.com/c9/architect), [Angular](https://github.com/angular/angular.js), and the [Laravel framework](https://github.com/laravel/framework/). It emphasizes It features:
+Artisan is a framework for development of large-scale (e.g. > 50,000 LOC) Node.js applications. It's inspired in part by [c9/architect](https://github.com/c9/architect), [Angular](https://github.com/angular/angular.js), and the [Laravel framework](https://github.com/laravel/framework/). It features:
 
  * Dependency injection
  * Good testability - DI, after all
- * Command-based architecture
- * Facades
+ * more to come?
 
-Currently it is targeted for server-side only.
+Currently it is targeted for server-side only, and is quite performant. After the intial module loading (which should happen once on application boot), it can run about 3.4 million resolutions per second on my Macbook Air at scales in O(1) time:
+
+```
+$ node bench.js
+Time to run: 35ms at 29959314 op/s.
+Time to run: 29ms at 36157793 op/s.
+Time to run: 30ms at 34952533 op/s.
+
+-------------
+
+Average time to run: 31ms
+Average ops per second: 33825032
+```
 
 ## Usage
 
@@ -61,7 +72,7 @@ module.exports = function (app) {
             app.module('large', ['someModule.service', function (m) {
                 return require('./large')(m);
             }]);
-            
+
             // Load all subdirectories of this as well.
             app.load('./');
         },
@@ -101,81 +112,9 @@ var random = app('random.small');
 console.log(random()); // will output 42
 
 // You can reverse the mocks you made by name...
-app.unmock('random.small'); 
+app.unmock('random.small');
 // Or just entirely
 app.unmock();
 ```
 
-#### Commands
-
-This is where things get fun. The [command pattern](http://en.wikipedia.org/wiki/Command_pattern) is really great for promoting loosely coupled systems, and pairs well with Node.js asyncness!
-
-> **Not Implemented**. Not yet sure if implementing this pattern in Node is significantly advantageous over using promises with the above IoC. Going going to wait and do some "real world" testing and determine if this is necessary.
-
-**Instantiation:**
-
-```js
-var artisan = require('node-artisan');
-// Lets say we have a command to create a user, with a name and password,
-// Make it just like you would a module, but use the context!
-app.command('add', function (username, password) {
-    // Set up our initial data. The command itself may be used to
-    // persist data between command stages.
-    this.username = username;
-    this.password = password;
-
-    // Define the modules we want to hit. These will get
-    // the command as their first input argument. It's async!
-    // Keys will be called after everything they depend upon
-    // are completed.
-    this.route = {
-        // Validate doesn't need anything to run, it'll go first.
-        'user.validate': [], 
-        // Hash the password after validation
-        'hashPassword': ['user.validate'], 
-        // And send the welcome email out at the same time
-        'user.welcome': ['user.validate'], 
-        // Only after those two are done, add the user.
-        'user.insert': ['hashPassword', 'user.welcome']
-    }
-});
-```
-
-**Example Usage:**
-
-```js
-    register: function (req, res) {
-        var cmd = app.dispatch('user.add', req.param('username'), req.param('password'));
-        
-        // Dispatch returns a Bluebird promise.
-        cmd.dispatch()
-            .then(function () {
-                return res.json(cmd.theUserModel);
-            })
-            .catch(function (e) {
-                return res.status(400).json(e);
-            })
-        
-        // You can also "inject" yourself before or after stages.
-        cmd.after('user.validate', function (cmd, next) {
-            if (iLikeThisPerson(cmd)) {
-                next();
-            } else {
-                res.status(400).json('You need to send me cookies first.');
-            }
-        });
-    }
-```
-
-**Example Handler:**
-
-```js
-function userValidate (command, callback) {
-    var data = { user: command.username, pass: command.password };
-    if (someLibrary.isValid(data)) {
-        callback();
-    } else {
-        callback('Noupe, try again!');
-    }
-}
-```
+#### Perform
