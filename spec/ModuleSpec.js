@@ -51,6 +51,20 @@ describe('The module system', function () {
         expect(app('moduleA.b')).toBe('moduleA.b loaded with mockd!');
     });
 
+    it('should literal mock unloaded modules', function () {
+        expect(app('moduleA.b', {
+            'moduleA.a': 'mockd!'
+        })).toBe('moduleA.b loaded with mockd!');
+    });
+
+
+    it('should literal mock loaded modules', function () {
+        expect(app('moduleA.b')).toBe('moduleA.b loaded with moduleA.a loaded');
+        expect(app('moduleA.b', {
+            'moduleA.a': 'mockd!'
+        })).toBe('moduleA.b loaded with mockd!');
+    });
+
     it('should unmock unloaded correctly', function () {
         app.mock('moduleA.a', function () { return 'mockd!'; });
         app.unmock();

@@ -99,7 +99,17 @@ var random = app('random.small');
 console.log(random());
 ```
 
-**Mocks:** You can, of course, mock anything for testing purposes.
+**Swapping:**
+
+You can also override dependencies manually, when you resolve the module. This can be useful for small mocking or manual injection. All that you need to do is pass in an object literal as the second parameter to `resolve`, with keys being modules you want to override and values being the object to inject. For example:
+
+```js
+var random = app('random.large', {
+    'someModule.service': 'this is fake!'
+});
+```
+
+**Actual Mocks:** You can, of course, mock anything for testing purposes.
 
 ```js
 app.mock('random.small', function () {
@@ -115,6 +125,3 @@ console.log(random()); // will output 42
 app.unmock('random.small');
 // Or just entirely
 app.unmock();
-```
-
-#### Perform
